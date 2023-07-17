@@ -27,7 +27,6 @@ import {
 } from "react-native";
 import { SvgProps } from "react-native-svg";
 
-// import { TextInputLabelProps } from "./TextInputOutsideLabel";
 import { DEFAULT_FORM_ERRORS } from "../../utils/errors";
 import { handleKeyPress } from "../../utils/keyboard";
 import {
@@ -236,6 +235,7 @@ export const TextInputCustom = <T extends FieldValues>({
         style={style}
         mainContainerStyle={[
           styles.mainContainer,
+          boxMainContainerStyle,
           variant === "noCropBorder" && styles.noCropBorderBg,
         ]}
         width={width}
