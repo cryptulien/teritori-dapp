@@ -33,6 +33,7 @@ import { RefreshButton } from "../../components/socialFeed/NewsFeed/RefreshButto
 import { RefreshButtonRound } from "../../components/socialFeed/NewsFeed/RefreshButton/RefreshButtonRound";
 import { SocialThreadCard } from "../../components/socialFeed/SocialThread/SocialThreadCard";
 import { SpacerColumn, SpacerRow } from "../../components/spacer";
+import { useFetchBotComments } from "../../hooks/feed/useFetchBotComments";
 import {
   combineFetchCommentPages,
   useFetchComments,
@@ -92,6 +93,9 @@ export const FeedPostViewScreen: ScreenFC<"FeedPostView"> = ({
     parentId: postResult?.identifier,
     totalCount: postResult?.sub_post_length,
     enabled: true,
+  });
+  const { data: botAnswer } = useFetchBotComments({
+    identifier: postResult?.identifier,
   });
   const isNextPageAvailable = useSharedValue(hasNextPage);
   const isLoadingSharedValue = useSharedValue(true);
@@ -270,6 +274,7 @@ export const FeedPostViewScreen: ScreenFC<"FeedPostView"> = ({
                       ? threadCardWidth
                       : threadCardWidth - LINES_HORIZONTAL_SPACE
                   }
+                  botAnswer={botAnswer!}
                   comments={comments}
                   onPressReply={onPressReply}
                   parentOffsetValue={parentOffsetValue}

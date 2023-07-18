@@ -6,6 +6,13 @@ option go_package = "./feedpb";
 service FeedService {
   rpc Posts(PostsRequest) returns (PostsResponse);
   rpc IPFSKey(IPFSKeyRequest) returns (IPFSKeyResponse);
+  rpc BotAnswer(BotAnswerRequest) returns (BotAnswerResponse);
+}
+message BotAnswerRequest {
+  string identifier = 1;
+}
+message BotAnswerResponse {
+  string answer =1;
 }
 
 message IPFSKeyRequest {
@@ -13,13 +20,6 @@ message IPFSKeyRequest {
 }
 message IPFSKeyResponse {
   string jwt = 1;
-}
-
-message ChatBotRequest {
-  string question = 1;
-}
-message ChatBotResponse {
-  string answer = 1;
 }
 
 message Reaction {

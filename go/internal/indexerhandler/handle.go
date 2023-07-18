@@ -41,6 +41,7 @@ type Config struct {
 	PricesClient     pricespb.PricesServiceClient
 	Network          *networks.CosmosNetwork
 	NetworkStore     networks.NetworkStore
+	ChatApiKey       string
 }
 
 type Handler struct {

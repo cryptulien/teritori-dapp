@@ -316,6 +316,7 @@ export const SocialCommentCard: React.FC<SocialCommentCardProps> = ({
                   : cardWidth - LINES_HORIZONTAL_SPACE * 2 - 1 // If not -1, the borderRight is hidden on small screens
               }
               comments={comments}
+              botAnswer=""
               onPressReply={onPressReply}
               overrideParentId={localComment.identifier}
             />

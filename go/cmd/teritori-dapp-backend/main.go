@@ -42,7 +42,6 @@ func main() {
 		airtableAPIKeydappsStore = fs.String("airtable-api-key-dapps-store", "", "api key of airtable for the dapps store")
 		networksFile             = fs.String("networks-file", "networks.json", "path to networks config file")
 		pinataJWT                = fs.String("pinata-jwt", "", "Pinata admin JWT token")
-		chatApiKey               = fs.String("chat-api-key", "", "api key of openAI")
 	)
 	if err := ff.Parse(fs, os.Args[1:],
 		ff.WithEnvVars(),
@@ -69,10 +68,6 @@ func main() {
 	if *pinataJWT == "" {
 		logger.Warn("missing PINATA_JWT, feed pinning will be disabled")
 	}
-	if *chatApiKey == "" {
-		logger.Warn("missing OpenAI API key")
-	}
-
 	// load networks
 	networksBytes, err := os.ReadFile(*networksFile)
 	if err != nil {
@@ -124,7 +119,6 @@ func main() {
 		Logger:     logger,
 		IndexerDB:  indexerDB,
 		PinataJWT:  *pinataJWT,
-		ChatApiKey: *chatApiKey,
 	})
 
 	daoSvc := dao.NewDAOService(context.Background(), &dao.Config{

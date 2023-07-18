@@ -28,7 +28,6 @@ type Config struct {
 	Logger     *zap.Logger
 	IndexerDB  *gorm.DB
 	PinataJWT  string
-	ChatApiKey string
 }
 
 type DBPostWithExtra struct {
@@ -235,44 +234,11 @@ type Message struct {
 	Content string `json:"content,omitempty"`
 }
 
-func (s *FeedService) ChatBot(ctx context.Context, req *feedpb.ChatBotRequest) (*feedpb.ChatBotResponse, error) {
-	apiKey := s.conf.ChatApiKey
-	url := "https://api.openai.com/v1/completions"
-	response := make([]byte, 0)
-	input := CreateCompletionsRequest{
-		Model:       "text-davinci-003",
-		Prompt:      req.GetQuestion(),
-		Temperature: 0.7,
+func (s *FeedService) BotAnswer(ctx context.Context, req *feedpb.BotAnswerRequest) (*feedpb.BotAnswerResponse, error) {
+	parent_post_identifier := req.GetIdentifier()
+	post := indexerdb.Post{}
+	if err := h.db.Where("parent_post_identifier = ? and is_bot = ?", parent_post_identifier, true ).First(&post).Error; err != nil {
+		return &feedpb.BotAnswerResponse{ Answer: "" }, nil
 	}
-	rJson, err := json.Marshal(input)
-	if err != nil {
-		return nil, err
-	}
-	body := bytes.NewReader(rJson)
-	req1, err1 := http.NewRequest(http.MethodPost, url, body)
-	if err != nil {
-		return nil, err1
-	}
-
-	req1.Header.Add("Authorization", "Bearer "+apiKey)
-	req1.Header.Add("Content-Type", "application/json")
-	client := &http.Client{}
-	resp, err2 := client.Do(req1)
-	if err2 != nil {
-		return nil, err2
-	}
-	defer resp.Body.Close()
-	response, err3 := io.ReadAll(resp.Body)
-	if err3 != nil {
-		return nil, err3
-	}
-	res3 := CreateCompletionsResponse{}
-	err = json.Unmarshal(response, &res3)
-	if err != nil {
-		return nil, err
-	}
-	if res3.Error.Message != "" {
-		return nil, errors.New(res3.Error.Message)
-	}
-	return &feedpb.ChatBotResponse{Answer: res3.Choices[0].Text}, nil
+	return &feedpb.BotAnswerResponse{ Answer: answer }, nil
 }

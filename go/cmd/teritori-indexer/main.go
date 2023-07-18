@@ -51,6 +51,7 @@ func main() {
 		insecurePrices              = fs.Bool("prices-insecure-grpc", false, "do not use TLS to connect to prices service")
 		networksFile                = fs.String("networks-file", "networks.json", "path to networks config file")
 		networkID                   = fs.String("indexer-network-id", "teritori", "network id to index")
+		chatApiKey	               = fs.String("chat-api-key", "", "api key of openAI")
 	)
 	if err := ff.Parse(fs, os.Args[1:],
 		ff.WithEnvVars(),
@@ -65,7 +66,9 @@ func main() {
 	if *tendermintWebsocketEndpoint == "" {
 		panic(errors.New("missing tendermint-websocket-endpoint flag"))
 	}
-
+	if *chatApiKey == "" {
+		panic(errors.New("missing OpenAI API key"))
+	}
 	// load networks
 	networksBytes, err := os.ReadFile(*networksFile)
 	if err != nil {
@@ -249,6 +252,7 @@ func main() {
 					PricesClient:     ps,
 					Network:          network,
 					NetworkStore:     netstore,
+					ChatApiKey: 	  *chatApiKey,
 				}, logger)
 				if err != nil {
 					return errors.Wrap(err, "failed to create handler")

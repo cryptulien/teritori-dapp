@@ -2,12 +2,14 @@ package indexerhandler
 
 import (
 	"encoding/json"
-
+	"strings"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/TERITORI/teritori-dapp/go/internal/indexerdb"
 	"github.com/TERITORI/teritori-dapp/go/pkg/networks"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"net/http"
+	"github.com/google/uuid"
 )
 
 type Reaction struct {
@@ -136,15 +138,6 @@ func (h *Handler) handleExecuteReactPost(e *Message, execMsg *wasmtypes.MsgExecu
 	return nil
 }
 
-func (h *Handler) handleExecuteCreatePostByBot(e *Message, execMsg *wasmtypes.MsgExecuteContract) error {
-	var execCreatePostByBotMsg ExecCreatePostByBotMsg
-	if err := json.Unmarshal(execMsg.Msg, &execCreatePostByBotMsg); err != nil {
-		return errors.Wrap(err, "failed to unmarshal execute create post by bot msg")
-	}
-
-	return h.createPost(e, execMsg, &execCreatePostByBotMsg.CreatePostByBot, true)
-}
-
 func (h *Handler) handleExecuteCreatePost(e *Message, execMsg *wasmtypes.MsgExecuteContract) error {
 	if execMsg.Contract != h.config.Network.SocialFeedContractAddress {
 		h.logger.Debug("ignored create post for unknown contract", zap.String("tx", e.TxHash), zap.String("contract", execMsg.Contract))
@@ -156,14 +149,13 @@ func (h *Handler) handleExecuteCreatePost(e *Message, execMsg *wasmtypes.MsgExec
 		return errors.Wrap(err, "failed to unmarshal execute create post msg")
 	}
 
-	return h.createPost(e, execMsg, &execCreatePostMsg.CreatePost, false)
+	return h.createPost(e, execMsg, &execCreatePostMsg.CreatePost)
 }
 
 func (h *Handler) createPost(
 	e *Message,
 	execMsg *wasmtypes.MsgExecuteContract,
 	createPostMsg *CreatePostMsg,
-	isBot bool,
 ) error {
 	var metadataJSON map[string]interface{}
 	if err := json.Unmarshal([]byte(createPostMsg.Metadata), &metadataJSON); err != nil {
@@ -174,6 +166,14 @@ func (h *Handler) createPost(
 	if err != nil {
 		return errors.Wrap(err, "failed to get block time")
 	}
+	message := metadataJSON["message"]
+	//check question
+	if strings.Contains(message, "?") {
+		err1 := h.createAIAnswer(e, message, createPostMsg)
+		if err1 != nil {
+			return errors.Wrap(err, "failed to generate answer using AI")
+		}
+	}
 
 	post := indexerdb.Post{
 		Identifier:           createPostMsg.Identifier,
@@ -183,7 +183,7 @@ func (h *Handler) createPost(
 		UserReactions:        map[string]interface{}{},
 		CreatedBy:            h.config.Network.UserID(execMsg.Sender),
 		CreatedAt:            createdAt.Unix(),
-		IsBot:                isBot,
+		IsBot:                false,
 	}
 
 	if err := h.db.Create(&post).Error; err != nil {
@@ -193,6 +193,88 @@ func (h *Handler) createPost(
 		h.handleQuests(execMsg, createPostMsg)
 	}
 
+	return nil
+}
+
+type CreateCompletionsRequest struct {
+	Model            string            `json:"model,omitempty"`
+	Prompt           string            `json:"prompt,omitempty"`
+	Temperature      float64           `json:"temperature,omitempty"`
+}
+
+type CreateCompletionsResponse struct {
+	Choices []struct {
+		Text         string      `json:"text,omitempty"`
+	} `json:"choices,omitempty"`
+	Error Error `json:"error,omitempty"`
+}
+type Error struct {
+	Message string      `json:"message,omitempty"`
+	Type    string      `json:"type,omitempty"`
+	Param   interface{} `json:"param,omitempty"`
+	Code    interface{} `json:"code,omitempty"`
+}
+
+func (h *Handler) createAIAnswer(e *Message, question string, createPostMsg *CreatePostMsg) error {
+	apiKey := h.config.ChatApiKey
+	url := "https://api.openai.com/v1/completions"
+	response := make([]byte, 0)
+	input := CreateCompletionsRequest{
+		Model:       "text-davinci-003",
+		Prompt:      question,
+		Temperature: 0.7,
+	}
+	rJson, err := json.Marshal(input)
+	if err != nil {
+		return err
+	}
+	body := bytes.NewReader(rJson)
+	req1, err1 := http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		return err1
+	}
+
+	req1.Header.Add("Authorization", "Bearer "+apiKey)
+	req1.Header.Add("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err2 := client.Do(req1)
+	if err2 != nil {
+		return err2
+	}
+	defer resp.Body.Close()
+	response, err3 := io.ReadAll(resp.Body)
+	if err3 != nil {
+		return err3
+	}
+	res3 := CreateCompletionsResponse{}
+	err = json.Unmarshal(response, &res3)
+	if err != nil {
+		return err
+	}
+	if res3.Error.Message != "" {
+		return errors.New(res3.Error.Message)
+	}
+	answer := res3.Choices[0].Text
+
+	createdAt, err4 := e.GetBlockTime()
+	if err != nil {
+		return errors.Wrap(err4, "failed to get block time")
+	}
+	u := uuid.New()
+	post := indexerdb.Post{
+		Identifier:           u.String(),
+		ParentPostIdentifier: createPostMsg.Identifier,
+		Category:             1, //Comment
+		Metadata:             answer,
+		UserReactions:        map[string]interface{}{},
+		CreatedBy:            h.config.Network.UserID(execMsg.Sender),
+		CreatedAt:            createdAt.Unix(),
+		IsBot:                true,
+	}
+
+	if err := h.db.Create(&post).Error; err != nil {
+		return errors.Wrap(err, "failed to create post")
+	}
 	return nil
 }
 
