@@ -40,7 +40,7 @@ const NFTAPIKeyInput: React.FC = () => {
             },
           ]}
         >
-          NFT.Storage/Pinata.cloud API key (for Social Feed)
+          NFT.Storage/Pinata.cloud API key (For files hosting)
         </BrandText>
         <Pressable
           onPress={() =>
