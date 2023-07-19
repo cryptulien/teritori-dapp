@@ -1,5 +1,9 @@
 import axios from "axios";
 
+import { generateIpfsKey } from "./social-feed";
+import { LocalFileData, RemoteFileData } from "./types/feed";
+import { uploadPostFilesToPinata } from "../components/socialFeed/NewsFeed/NewsFeedQueries";
+
 export const ipfsURLToHTTPURL = (ipfsURL: string | undefined) => {
   if (!ipfsURL) {
     return "";
@@ -13,29 +17,23 @@ export const ipfsURLToHTTPURL = (ipfsURL: string | undefined) => {
   return "https://nftstorage.link/ipfs/" + ipfsURL;
 };
 
-export const ipfsPinataUrl = (ipfsHash: string): string => {
-  return `${process.env.PINATA_GATEWAY}/${ipfsHash}`;
-};
+export const uploadFileToIPFS = async (
+  file: LocalFileData,
+  networkId: string,
+  userId: string
+) => {
+  let uploadedFiles: RemoteFileData[] = [];
+  const pinataJWTKey = await generateIpfsKey(networkId, userId);
 
-export const uploadFileToIPFS = async (file: File): Promise<string> => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file, file.name);
-    const res = await axios.post(
-      "https://api.pinata.cloud/pinning/pinFileToIPFS",
-      formData,
-      {
-        headers: {
-          pinata_api_key: process.env.PINATA_API_KEY,
-          pinata_secret_api_key: process.env.PINATA_SECRET_API_KEY,
-        },
-      }
-    );
-    return res.data.IpfsHash;
-  } catch (exception) {
-    console.log(exception);
-    return "";
+  if (pinataJWTKey) {
+    uploadedFiles = await uploadPostFilesToPinata({
+      files: [file],
+      pinataJWTKey,
+    });
   }
+  if (!uploadedFiles.find((file) => file.url)) {
+    console.error("upload file err : Fail to pin to IPFS");
+  } else return uploadedFiles[0];
 };
 
 export const uploadJSONToIPFS = async (data: object): Promise<string> => {
