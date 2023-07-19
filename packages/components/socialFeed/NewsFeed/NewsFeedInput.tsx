@@ -17,11 +17,7 @@ import {
   ReplyToType,
   SocialFeedMetadata,
 } from "./NewsFeed.type";
-import {
-  generatePostMetadata,
-  getPostCategory,
-  uploadPostFilesToPinata,
-} from "./NewsFeedQueries";
+import { generatePostMetadata, getPostCategory } from "./NewsFeedQueries";
 import { NotEnoughFundModal } from "./NotEnoughFundModal";
 import audioSVG from "../../../../assets/icons/audio.svg";
 import cameraSVG from "../../../../assets/icons/camera.svg";
@@ -43,6 +39,7 @@ import useSelectedWallet from "../../../hooks/useSelectedWallet";
 import { getUserId, mustGetCosmosNetwork } from "../../../networks";
 import { prettyPrice } from "../../../utils/coins";
 import { defaultSocialFeedFee } from "../../../utils/fee";
+import { generateIpfsKey, uploadFilesToPinata } from "../../../utils/ipfs";
 import {
   AUDIO_MIME_TYPES,
   IMAGE_MIME_TYPES,
@@ -52,7 +49,6 @@ import {
   SOCIAL_FEED_ARTICLE_MIN_CHARS_LIMIT,
   hashtagMatch,
   mentionMatch,
-  generateIpfsKey,
   replaceFileInArray,
   removeFileFromArray,
 } from "../../../utils/social-feed";
@@ -77,7 +73,7 @@ import {
   SOCIAL_FEED_BREAKPOINT_M,
 } from "../../../utils/style/layout";
 import { replaceBetweenString } from "../../../utils/text";
-import { LocalFileData, RemoteFileData } from "../../../utils/types/feed";
+import { LocalFileData, RemoteFileData } from "../../../utils/types/files";
 import { BrandText } from "../../BrandText";
 import { FilesPreviewsContainer } from "../../FilePreview/FilesPreviewsContainer";
 import FlexRow from "../../FlexRow";
@@ -241,7 +237,7 @@ export const NewsFeedInput = React.forwardRef<
         if (formValues.files?.length) {
           const pinataJWTKey = await generateIpfsKey(selectedNetworkId, userId);
           if (pinataJWTKey) {
-            files = await uploadPostFilesToPinata({
+            files = await uploadFilesToPinata({
               files: formValues.files,
               pinataJWTKey,
             });

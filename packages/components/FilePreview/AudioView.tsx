@@ -17,7 +17,7 @@ import {
 } from "../../utils/style/colors";
 import { fontSemibold13, fontSemibold14 } from "../../utils/style/fonts";
 import { layout, screenContentMaxWidth } from "../../utils/style/layout";
-import { RemoteFileData } from "../../utils/types/feed";
+import { RemoteFileData } from "../../utils/types/files";
 import { BrandText } from "../BrandText";
 import { SVG } from "../SVG";
 import { THUMBNAIL_WIDTH } from "../socialFeed/SocialThread/SocialMessageContent";

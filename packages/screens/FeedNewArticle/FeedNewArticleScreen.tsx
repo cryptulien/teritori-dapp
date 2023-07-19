@@ -31,12 +31,10 @@ import { useSelectedNetworkId } from "../../hooks/useSelectedNetwork";
 import useSelectedWallet from "../../hooks/useSelectedWallet";
 import { getUserId, NetworkKind } from "../../networks";
 import { prettyPrice } from "../../utils/coins";
+import { generateIpfsKey } from "../../utils/ipfs";
 import { IMAGE_MIME_TYPES } from "../../utils/mime";
 import { ScreenFC, useAppNavigation } from "../../utils/navigation";
-import {
-  ARTICLE_COVER_IMAGE_HEIGHT,
-  generateIpfsKey,
-} from "../../utils/social-feed";
+import { ARTICLE_COVER_IMAGE_HEIGHT } from "../../utils/social-feed";
 import {
   neutral00,
   neutral11,
