@@ -9,10 +9,10 @@ service FeedService {
   rpc BotAnswer(BotAnswerRequest) returns (BotAnswerResponse);
 }
 message BotAnswerRequest {
-  string identifier = 1;
+  string parent_post_identifier = 1;
 }
 message BotAnswerResponse {
-  string answer =1;
+  repeated Post posts = 1;
 }
 
 message IPFSKeyRequest {

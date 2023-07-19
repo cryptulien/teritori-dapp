@@ -1,15 +1,18 @@
 package indexerhandler
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"net/http"
 	"strings"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/TERITORI/teritori-dapp/go/internal/indexerdb"
 	"github.com/TERITORI/teritori-dapp/go/pkg/networks"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net/http"
-	"github.com/google/uuid"
 )
 
 type Reaction struct {
@@ -166,10 +169,13 @@ func (h *Handler) createPost(
 	if err != nil {
 		return errors.Wrap(err, "failed to get block time")
 	}
-	message := metadataJSON["message"]
+	message, ok := metadataJSON["message"].(string)
+	if !ok {
+		return errors.Wrap(err, "failed to get message")
+	}
 	//check question
 	if strings.Contains(message, "?") {
-		err1 := h.createAIAnswer(e, message, createPostMsg)
+		err1 := h.createAIAnswer(e, metadataJSON, createPostMsg) //store AI's answer to indexer db
 		if err1 != nil {
 			return errors.Wrap(err, "failed to generate answer using AI")
 		}
@@ -189,22 +195,21 @@ func (h *Handler) createPost(
 	if err := h.db.Create(&post).Error; err != nil {
 		return errors.Wrap(err, "failed to create post")
 	}
-	if !isBot {
-		h.handleQuests(execMsg, createPostMsg)
-	}
+
+	h.handleQuests(execMsg, createPostMsg)
 
 	return nil
 }
 
 type CreateCompletionsRequest struct {
-	Model            string            `json:"model,omitempty"`
-	Prompt           string            `json:"prompt,omitempty"`
-	Temperature      float64           `json:"temperature,omitempty"`
+	Model       string  `json:"model,omitempty"`
+	Prompt      string  `json:"prompt,omitempty"`
+	Temperature float64 `json:"temperature,omitempty"`
 }
 
 type CreateCompletionsResponse struct {
 	Choices []struct {
-		Text         string      `json:"text,omitempty"`
+		Text string `json:"text,omitempty"`
 	} `json:"choices,omitempty"`
 	Error Error `json:"error,omitempty"`
 }
@@ -215,10 +220,11 @@ type Error struct {
 	Code    interface{} `json:"code,omitempty"`
 }
 
-func (h *Handler) createAIAnswer(e *Message, question string, createPostMsg *CreatePostMsg) error {
+func (h *Handler) createAIAnswer(e *Message, metadata map[string]interface{}, createPostMsg *CreatePostMsg) error {
 	apiKey := h.config.ChatApiKey
 	url := "https://api.openai.com/v1/completions"
 	response := make([]byte, 0)
+	question, _ := metadata["message"].(string)
 	input := CreateCompletionsRequest{
 		Model:       "text-davinci-003",
 		Prompt:      question,
@@ -261,13 +267,14 @@ func (h *Handler) createAIAnswer(e *Message, question string, createPostMsg *Cre
 		return errors.Wrap(err4, "failed to get block time")
 	}
 	u := uuid.New()
+	metadata["message"] = answer
 	post := indexerdb.Post{
 		Identifier:           u.String(),
 		ParentPostIdentifier: createPostMsg.Identifier,
 		Category:             1, //Comment
-		Metadata:             answer,
+		Metadata:             metadata,
 		UserReactions:        map[string]interface{}{},
-		CreatedBy:            h.config.Network.UserID(execMsg.Sender),
+		CreatedBy:            "",
 		CreatedAt:            createdAt.Unix(),
 		IsBot:                true,
 	}

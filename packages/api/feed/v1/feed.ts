@@ -7,11 +7,11 @@ import _m0 from "protobufjs/minimal";
 export const protobufPackage = "feed.v1";
 
 export interface BotAnswerRequest {
-  identifier: string;
+  parentPostIdentifier: string;
 }
 
 export interface BotAnswerResponse {
-  answer: string;
+  posts: Post[];
 }
 
 export interface IPFSKeyRequest {
@@ -58,117 +58,99 @@ export interface PostsResponse {
 }
 
 function createBaseBotAnswerRequest(): BotAnswerRequest {
-  return { identifier: "" };
+  return { parentPostIdentifier: "" };
 }
 
 export const BotAnswerRequest = {
   encode(message: BotAnswerRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.identifier !== "") {
-      writer.uint32(10).string(message.identifier);
+    if (message.parentPostIdentifier !== "") {
+      writer.uint32(10).string(message.parentPostIdentifier);
     }
     return writer;
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): BotAnswerRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseBotAnswerRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.identifier = reader.string();
-          continue;
+          message.parentPostIdentifier = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
 
   fromJSON(object: any): BotAnswerRequest {
-    return { identifier: isSet(object.identifier) ? String(object.identifier) : "" };
+    return { parentPostIdentifier: isSet(object.parentPostIdentifier) ? String(object.parentPostIdentifier) : "" };
   },
 
   toJSON(message: BotAnswerRequest): unknown {
     const obj: any = {};
-    if (message.identifier !== "") {
-      obj.identifier = message.identifier;
-    }
+    message.parentPostIdentifier !== undefined && (obj.parentPostIdentifier = message.parentPostIdentifier);
     return obj;
-  },
-
-  create<I extends Exact<DeepPartial<BotAnswerRequest>, I>>(base?: I): BotAnswerRequest {
-    return BotAnswerRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<BotAnswerRequest>, I>>(object: I): BotAnswerRequest {
     const message = createBaseBotAnswerRequest();
-    message.identifier = object.identifier ?? "";
+    message.parentPostIdentifier = object.parentPostIdentifier ?? "";
     return message;
   },
 };
 
 function createBaseBotAnswerResponse(): BotAnswerResponse {
-  return { answer: "" };
+  return { posts: [] };
 }
 
 export const BotAnswerResponse = {
   encode(message: BotAnswerResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.answer !== "") {
-      writer.uint32(10).string(message.answer);
+    for (const v of message.posts) {
+      Post.encode(v!, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): BotAnswerResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseBotAnswerResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.answer = reader.string();
-          continue;
+          message.posts.push(Post.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
 
   fromJSON(object: any): BotAnswerResponse {
-    return { answer: isSet(object.answer) ? String(object.answer) : "" };
+    return { posts: Array.isArray(object?.posts) ? object.posts.map((e: any) => Post.fromJSON(e)) : [] };
   },
 
   toJSON(message: BotAnswerResponse): unknown {
     const obj: any = {};
-    if (message.answer !== "") {
-      obj.answer = message.answer;
+    if (message.posts) {
+      obj.posts = message.posts.map((e) => e ? Post.toJSON(e) : undefined);
+    } else {
+      obj.posts = [];
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<BotAnswerResponse>, I>>(base?: I): BotAnswerResponse {
-    return BotAnswerResponse.fromPartial(base ?? {});
-  },
-
   fromPartial<I extends Exact<DeepPartial<BotAnswerResponse>, I>>(object: I): BotAnswerResponse {
     const message = createBaseBotAnswerResponse();
-    message.answer = object.answer ?? "";
+    message.posts = object.posts?.map((e) => Post.fromPartial(e)) || [];
     return message;
   },
 };
@@ -186,24 +168,19 @@ export const IPFSKeyRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): IPFSKeyRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseIPFSKeyRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
           message.userId = reader.string();
-          continue;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -214,14 +191,8 @@ export const IPFSKeyRequest = {
 
   toJSON(message: IPFSKeyRequest): unknown {
     const obj: any = {};
-    if (message.userId !== "") {
-      obj.userId = message.userId;
-    }
+    message.userId !== undefined && (obj.userId = message.userId);
     return obj;
-  },
-
-  create<I extends Exact<DeepPartial<IPFSKeyRequest>, I>>(base?: I): IPFSKeyRequest {
-    return IPFSKeyRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<IPFSKeyRequest>, I>>(object: I): IPFSKeyRequest {
@@ -244,24 +215,19 @@ export const IPFSKeyResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): IPFSKeyResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseIPFSKeyResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
           message.jwt = reader.string();
-          continue;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -272,14 +238,8 @@ export const IPFSKeyResponse = {
 
   toJSON(message: IPFSKeyResponse): unknown {
     const obj: any = {};
-    if (message.jwt !== "") {
-      obj.jwt = message.jwt;
-    }
+    message.jwt !== undefined && (obj.jwt = message.jwt);
     return obj;
-  },
-
-  create<I extends Exact<DeepPartial<IPFSKeyResponse>, I>>(base?: I): IPFSKeyResponse {
-    return IPFSKeyResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<IPFSKeyResponse>, I>>(object: I): IPFSKeyResponse {
@@ -305,31 +265,22 @@ export const Reaction = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): Reaction {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseReaction();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
           message.icon = reader.string();
-          continue;
+          break;
         case 2:
-          if (tag !== 16) {
-            break;
-          }
-
           message.count = reader.uint32();
-          continue;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -343,17 +294,9 @@ export const Reaction = {
 
   toJSON(message: Reaction): unknown {
     const obj: any = {};
-    if (message.icon !== "") {
-      obj.icon = message.icon;
-    }
-    if (message.count !== 0) {
-      obj.count = Math.round(message.count);
-    }
+    message.icon !== undefined && (obj.icon = message.icon);
+    message.count !== undefined && (obj.count = Math.round(message.count));
     return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Reaction>, I>>(base?: I): Reaction {
-    return Reaction.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Reaction>, I>>(object: I): Reaction {
@@ -415,87 +358,46 @@ export const Post = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): Post {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePost();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 8) {
-            break;
-          }
-
           message.category = reader.uint32();
-          continue;
+          break;
         case 2:
-          if (tag !== 16) {
-            break;
-          }
-
           message.isDeleted = reader.bool();
-          continue;
+          break;
         case 3:
-          if (tag !== 26) {
-            break;
-          }
-
           message.identifier = reader.string();
-          continue;
+          break;
         case 4:
-          if (tag !== 34) {
-            break;
-          }
-
           message.metadata = reader.string();
-          continue;
+          break;
         case 5:
-          if (tag !== 42) {
-            break;
-          }
-
           message.parentPostIdentifier = reader.string();
-          continue;
+          break;
         case 6:
-          if (tag !== 48) {
-            break;
-          }
-
           message.subPostLength = reader.uint32();
-          continue;
+          break;
         case 7:
-          if (tag !== 58) {
-            break;
-          }
-
           message.createdBy = reader.string();
-          continue;
+          break;
         case 8:
-          if (tag !== 64) {
-            break;
-          }
-
           message.createdAt = longToNumber(reader.int64() as Long);
-          continue;
+          break;
         case 10:
-          if (tag !== 80) {
-            break;
-          }
-
           message.tipAmount = longToNumber(reader.int64() as Long);
-          continue;
+          break;
         case 9:
-          if (tag !== 74) {
-            break;
-          }
-
           message.reactions.push(Reaction.decode(reader, reader.uint32()));
-          continue;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -517,41 +419,21 @@ export const Post = {
 
   toJSON(message: Post): unknown {
     const obj: any = {};
-    if (message.category !== 0) {
-      obj.category = Math.round(message.category);
-    }
-    if (message.isDeleted === true) {
-      obj.isDeleted = message.isDeleted;
-    }
-    if (message.identifier !== "") {
-      obj.identifier = message.identifier;
-    }
-    if (message.metadata !== "") {
-      obj.metadata = message.metadata;
-    }
-    if (message.parentPostIdentifier !== "") {
-      obj.parentPostIdentifier = message.parentPostIdentifier;
-    }
-    if (message.subPostLength !== 0) {
-      obj.subPostLength = Math.round(message.subPostLength);
-    }
-    if (message.createdBy !== "") {
-      obj.createdBy = message.createdBy;
-    }
-    if (message.createdAt !== 0) {
-      obj.createdAt = Math.round(message.createdAt);
-    }
-    if (message.tipAmount !== 0) {
-      obj.tipAmount = Math.round(message.tipAmount);
-    }
-    if (message.reactions?.length) {
-      obj.reactions = message.reactions.map((e) => Reaction.toJSON(e));
+    message.category !== undefined && (obj.category = Math.round(message.category));
+    message.isDeleted !== undefined && (obj.isDeleted = message.isDeleted);
+    message.identifier !== undefined && (obj.identifier = message.identifier);
+    message.metadata !== undefined && (obj.metadata = message.metadata);
+    message.parentPostIdentifier !== undefined && (obj.parentPostIdentifier = message.parentPostIdentifier);
+    message.subPostLength !== undefined && (obj.subPostLength = Math.round(message.subPostLength));
+    message.createdBy !== undefined && (obj.createdBy = message.createdBy);
+    message.createdAt !== undefined && (obj.createdAt = Math.round(message.createdAt));
+    message.tipAmount !== undefined && (obj.tipAmount = Math.round(message.tipAmount));
+    if (message.reactions) {
+      obj.reactions = message.reactions.map((e) => e ? Reaction.toJSON(e) : undefined);
+    } else {
+      obj.reactions = [];
     }
     return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Post>, I>>(base?: I): Post {
-    return Post.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Post>, I>>(object: I): Post {
@@ -594,55 +476,35 @@ export const PostFilter = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): PostFilter {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePostFilter();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
           message.user = reader.string();
-          continue;
+          break;
         case 2:
-          if (tag !== 18) {
-            break;
-          }
-
           message.mentions.push(reader.string());
-          continue;
+          break;
         case 3:
-          if (tag === 24) {
-            message.categories.push(reader.uint32());
-
-            continue;
-          }
-
-          if (tag === 26) {
+          if ((tag & 7) === 2) {
             const end2 = reader.uint32() + reader.pos;
             while (reader.pos < end2) {
               message.categories.push(reader.uint32());
             }
-
-            continue;
+          } else {
+            message.categories.push(reader.uint32());
           }
-
           break;
         case 4:
-          if (tag !== 34) {
-            break;
-          }
-
           message.hashtags.push(reader.string());
-          continue;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -658,23 +520,23 @@ export const PostFilter = {
 
   toJSON(message: PostFilter): unknown {
     const obj: any = {};
-    if (message.user !== "") {
-      obj.user = message.user;
+    message.user !== undefined && (obj.user = message.user);
+    if (message.mentions) {
+      obj.mentions = message.mentions.map((e) => e);
+    } else {
+      obj.mentions = [];
     }
-    if (message.mentions?.length) {
-      obj.mentions = message.mentions;
-    }
-    if (message.categories?.length) {
+    if (message.categories) {
       obj.categories = message.categories.map((e) => Math.round(e));
+    } else {
+      obj.categories = [];
     }
-    if (message.hashtags?.length) {
-      obj.hashtags = message.hashtags;
+    if (message.hashtags) {
+      obj.hashtags = message.hashtags.map((e) => e);
+    } else {
+      obj.hashtags = [];
     }
     return obj;
-  },
-
-  create<I extends Exact<DeepPartial<PostFilter>, I>>(base?: I): PostFilter {
-    return PostFilter.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PostFilter>, I>>(object: I): PostFilter {
@@ -706,38 +568,25 @@ export const PostsRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): PostsRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePostsRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
           message.filter = PostFilter.decode(reader, reader.uint32());
-          continue;
+          break;
         case 2:
-          if (tag !== 16) {
-            break;
-          }
-
           message.limit = reader.uint32();
-          continue;
+          break;
         case 3:
-          if (tag !== 24) {
-            break;
-          }
-
           message.offset = reader.uint32();
-          continue;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -752,20 +601,10 @@ export const PostsRequest = {
 
   toJSON(message: PostsRequest): unknown {
     const obj: any = {};
-    if (message.filter !== undefined) {
-      obj.filter = PostFilter.toJSON(message.filter);
-    }
-    if (message.limit !== 0) {
-      obj.limit = Math.round(message.limit);
-    }
-    if (message.offset !== 0) {
-      obj.offset = Math.round(message.offset);
-    }
+    message.filter !== undefined && (obj.filter = message.filter ? PostFilter.toJSON(message.filter) : undefined);
+    message.limit !== undefined && (obj.limit = Math.round(message.limit));
+    message.offset !== undefined && (obj.offset = Math.round(message.offset));
     return obj;
-  },
-
-  create<I extends Exact<DeepPartial<PostsRequest>, I>>(base?: I): PostsRequest {
-    return PostsRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PostsRequest>, I>>(object: I): PostsRequest {
@@ -792,24 +631,19 @@ export const PostsResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): PostsResponse {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePostsResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
-            break;
-          }
-
           message.posts.push(Post.decode(reader, reader.uint32()));
-          continue;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -820,14 +654,12 @@ export const PostsResponse = {
 
   toJSON(message: PostsResponse): unknown {
     const obj: any = {};
-    if (message.posts?.length) {
-      obj.posts = message.posts.map((e) => Post.toJSON(e));
+    if (message.posts) {
+      obj.posts = message.posts.map((e) => e ? Post.toJSON(e) : undefined);
+    } else {
+      obj.posts = [];
     }
     return obj;
-  },
-
-  create<I extends Exact<DeepPartial<PostsResponse>, I>>(base?: I): PostsResponse {
-    return PostsResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PostsResponse>, I>>(object: I): PostsResponse {
@@ -880,11 +712,10 @@ export const FeedServicePostsDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
-      const value = PostsResponse.decode(data);
       return {
-        ...value,
+        ...PostsResponse.decode(data),
         toObject() {
-          return value;
+          return this;
         },
       };
     },
@@ -903,11 +734,10 @@ export const FeedServiceIPFSKeyDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
-      const value = IPFSKeyResponse.decode(data);
       return {
-        ...value,
+        ...IPFSKeyResponse.decode(data),
         toObject() {
-          return value;
+          return this;
         },
       };
     },
@@ -926,11 +756,10 @@ export const FeedServiceBotAnswerDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
-      const value = BotAnswerResponse.decode(data);
       return {
-        ...value,
+        ...BotAnswerResponse.decode(data),
         toObject() {
-          return value;
+          return this;
         },
       };
     },
@@ -984,17 +813,17 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata = metadata && this.options.metadata
       ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
-      : metadata ?? this.options.metadata;
+      : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
         request,
         host: this.host,
-        metadata: maybeCombinedMetadata ?? {},
-        ...(this.options.transport !== undefined ? { transport: this.options.transport } : {}),
-        debug: this.options.debug ?? false,
+        metadata: maybeCombinedMetadata,
+        transport: this.options.transport,
+        debug: this.options.debug,
         onEnd: function (response) {
           if (response.status === grpc.Code.OK) {
-            resolve(response.message!.toObject());
+            resolve(response.message);
           } else {
             const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
             reject(err);
@@ -1005,10 +834,10 @@ export class GrpcWebImpl {
   }
 }
 
-declare const self: any | undefined;
-declare const window: any | undefined;
-declare const global: any | undefined;
-const tsProtoGlobalThis: any = (() => {
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var globalThis: any = (() => {
   if (typeof globalThis !== "undefined") {
     return globalThis;
   }
@@ -1037,7 +866,7 @@ export type Exact<P, I extends P> = P extends Builtin ? P
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {
-    throw new tsProtoGlobalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
   }
   return long.toNumber();
 }
@@ -1051,7 +880,7 @@ function isSet(value: any): boolean {
   return value !== null && value !== undefined;
 }
 
-export class GrpcWebError extends tsProtoGlobalThis.Error {
+export class GrpcWebError extends Error {
   constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
     super(message);
   }

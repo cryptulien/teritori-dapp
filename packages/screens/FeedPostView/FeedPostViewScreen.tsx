@@ -94,8 +94,9 @@ export const FeedPostViewScreen: ScreenFC<"FeedPostView"> = ({
     totalCount: postResult?.sub_post_length,
     enabled: true,
   });
-  const { data: botAnswer } = useFetchBotComments({
-    identifier: postResult?.identifier,
+
+  const { data: botData } = useFetchBotComments({
+    parentPostIdentifier: postResult?.identifier,
   });
   const isNextPageAvailable = useSharedValue(hasNextPage);
   const isLoadingSharedValue = useSharedValue(true);
@@ -107,6 +108,14 @@ export const FeedPostViewScreen: ScreenFC<"FeedPostView"> = ({
   const comments = useMemo(
     () => (data ? combineFetchCommentPages(data.pages) : []),
     [data]
+  );
+  const botComments = useMemo(
+    () => (botData ? combineFetchCommentPages(botData.pages) : []),
+    [botData]
+  );
+  const allComments = useMemo(
+    () => [...botComments, ...comments],
+    [comments, botComments]
   );
 
   const onPressReply: OnPressReplyType = (data) => {
@@ -274,8 +283,7 @@ export const FeedPostViewScreen: ScreenFC<"FeedPostView"> = ({
                       ? threadCardWidth
                       : threadCardWidth - LINES_HORIZONTAL_SPACE
                   }
-                  botAnswer={botAnswer!}
-                  comments={comments}
+                  comments={allComments}
                   onPressReply={onPressReply}
                   parentOffsetValue={parentOffsetValue}
                 />

@@ -253,12 +253,12 @@ func (h *Handler) handleExecute(e *Message) error {
 		if err := h.handleExecuteCreatePost(e, &executeMsg); err != nil {
 			return errors.Wrap(err, "failed to handle create post")
 		}
-	case "create_post_by_bot":
-		if executeMsg.Contract == h.config.Network.SocialFeedContractAddress {
-			if err := h.handleExecuteCreatePostByBot(e, &executeMsg); err != nil {
-				return errors.Wrap(err, "failed to handle create post by bot")
-			}
-		}
+	// case "create_post_by_bot":
+	// 	if executeMsg.Contract == h.config.Network.SocialFeedContractAddress {
+	// 		if err := h.handleExecuteCreatePostByBot(e, &executeMsg); err != nil {
+	// 			return errors.Wrap(err, "failed to handle create post by bot")
+	// 		}
+	// 	}
 	case "tip_post":
 		if executeMsg.Contract == h.config.Network.SocialFeedContractAddress {
 			if err := h.handleExecuteTipPost(e, &executeMsg); err != nil {

@@ -1,12 +1,9 @@
 package feed
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"time"
 
@@ -25,9 +22,9 @@ type FeedService struct {
 }
 
 type Config struct {
-	Logger     *zap.Logger
-	IndexerDB  *gorm.DB
-	PinataJWT  string
+	Logger    *zap.Logger
+	IndexerDB *gorm.DB
+	PinataJWT string
 }
 
 type DBPostWithExtra struct {
@@ -235,10 +232,57 @@ type Message struct {
 }
 
 func (s *FeedService) BotAnswer(ctx context.Context, req *feedpb.BotAnswerRequest) (*feedpb.BotAnswerResponse, error) {
-	parent_post_identifier := req.GetIdentifier()
-	post := indexerdb.Post{}
-	if err := h.db.Where("parent_post_identifier = ? and is_bot = ?", parent_post_identifier, true ).First(&post).Error; err != nil {
-		return &feedpb.BotAnswerResponse{ Answer: "" }, nil
+	parent_post_identifier := req.GetParentPostIdentifier()
+
+	query := s.conf.IndexerDB.
+		Table("posts as p1").
+		Where("p1.parent_post_identifier = ?", parent_post_identifier).
+		Select(`
+			p1.*,
+			(
+				SELECT COUNT(p2.identifier) AS sub_post_length
+				FROM posts p2
+				WHERE p2.parent_post_identifier = p1.identifier
+			)
+		`)
+	query = query.Where("category = ?", 1) //comment
+	query = query.Where("is_bot = ?", true)
+	query = query.
+		Order("created_at DESC")
+
+	var dbPostWithExtras []DBPostWithExtra
+	if err := query.Find(&dbPostWithExtras).Error; err != nil {
+		return nil, errors.Wrap(err, "failed to query posts")
 	}
-	return &feedpb.BotAnswerResponse{ Answer: answer }, nil
+
+	posts := make([]*feedpb.Post, len(dbPostWithExtras))
+	for idx, dbPost := range dbPostWithExtras {
+		var reactions []*feedpb.Reaction
+		for icon, users := range dbPost.UserReactions {
+			reactions = append(reactions, &feedpb.Reaction{
+				Icon:  icon,
+				Count: uint32(len(users.([]interface{}))),
+			})
+		}
+
+		metadata, err := json.Marshal(dbPost.Metadata)
+		if err != nil {
+			return nil, err
+		}
+
+		posts[idx] = &feedpb.Post{
+			Category:             dbPost.Category,
+			IsDeleted:            dbPost.IsDeleted,
+			Identifier:           dbPost.Identifier,
+			Metadata:             string(metadata),
+			ParentPostIdentifier: dbPost.ParentPostIdentifier,
+			SubPostLength:        dbPost.SubPostLength,
+			CreatedBy:            string(dbPost.CreatedBy),
+			CreatedAt:            dbPost.CreatedAt,
+			Reactions:            reactions,
+			TipAmount:            dbPost.TipAmount,
+		}
+	}
+
+	return &feedpb.BotAnswerResponse{Posts: posts}, nil
 }
