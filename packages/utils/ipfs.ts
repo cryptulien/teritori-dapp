@@ -12,6 +12,12 @@ interface UploadPostFilesToPinataParams {
   pinataJWTKey: string;
 }
 
+interface UploadPostJSONToPinataParams {
+  json: object;
+  networkId: string;
+  userId: string;
+}
+
 export const uploadFilesToPinata = async ({
   files,
   pinataJWTKey,
@@ -51,6 +57,29 @@ export const uploadFilesToPinata = async ({
   return await Promise.all(queries);
 };
 
+export const uploadJSONToIPFS = async ({
+  json,
+  networkId,
+  userId,
+}: UploadPostJSONToPinataParams): Promise<
+  (object & { url: string }) | undefined
+> => {
+  const pinataJWTKey = await generateIpfsKey(networkId, userId);
+  if (!pinataJWTKey) return;
+  const uploadedFile = await pinataPinJSONToIPFS({
+    json,
+    pinataJWTKey,
+  });
+  if (!uploadedFile) {
+    console.error("upload file err : Fail to pin to IPFS");
+  } else {
+    return {
+      ...json,
+      url: uploadedFile.IpfsHash,
+    };
+  }
+};
+
 export const ipfsURLToHTTPURL = (ipfsURL: string | undefined) => {
   if (!ipfsURL) {
     return "";
@@ -81,25 +110,6 @@ export const uploadFileToIPFS = async (
   if (!uploadedFiles.find((file) => file.url)) {
     console.error("upload file err : Fail to pin to IPFS");
   } else return uploadedFiles[0];
-};
-
-export const uploadJSONToIPFS = async (
-  json: object,
-  networkId: string,
-  userId: string
-) => {
-  let uploadedFile: RemoteFileData | undefined;
-  const pinataJWTKey = await generateIpfsKey(networkId, userId);
-
-  if (pinataJWTKey) {
-    uploadedFile = await pinataPinJSONToIPFS({
-      json,
-      pinataJWTKey,
-    });
-  }
-  if (!uploadedFile) {
-    console.error("upload file err : Fail to pin to IPFS");
-  } else return uploadedFile;
 };
 
 export const generateIpfsKey = async (networkId: string, userId: string) => {
