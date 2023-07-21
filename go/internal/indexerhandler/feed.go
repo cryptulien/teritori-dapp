@@ -267,12 +267,16 @@ func (h *Handler) createAIAnswer(e *Message, metadata map[string]interface{}, cr
 		return errors.Wrap(err4, "failed to get block time")
 	}
 	u := uuid.New()
-	metadata["message"] = answer
+	newMetaData := make(map[string]interface{})
+	for k, v := range metadata {
+		newMetaData[k] = v
+	}
+	newMetaData["message"] = answer
 	post := indexerdb.Post{
 		Identifier:           u.String(),
 		ParentPostIdentifier: createPostMsg.Identifier,
 		Category:             1, //Comment
-		Metadata:             metadata,
+		Metadata:             newMetaData,
 		UserReactions:        map[string]interface{}{},
 		CreatedBy:            "",
 		CreatedAt:            createdAt.Unix(),

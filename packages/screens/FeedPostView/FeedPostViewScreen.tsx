@@ -100,6 +100,19 @@ export const FeedPostViewScreen: ScreenFC<"FeedPostView"> = ({
   });
   const isNextPageAvailable = useSharedValue(hasNextPage);
   const isLoadingSharedValue = useSharedValue(true);
+  const postResultWithBot = useMemo(() => {
+    if (
+      postResult &&
+      botData &&
+      botData.pages.length > 0 &&
+      botData.pages[0]!.list!.length > 0
+    ) {
+      postResult.sub_post_length = postResult.sub_post_length + 1;
+      return postResult;
+    } else {
+      return postResult;
+    }
+  }, [postResult, botData]);
 
   useEffect(() => {
     isLoadingSharedValue.value = isLoadingPostResult || isLoadingComments;
@@ -243,7 +256,10 @@ export const FeedPostViewScreen: ScreenFC<"FeedPostView"> = ({
                         borderRightWidth: 0,
                       }
                     }
-                    post={postResultToPost(selectedNetworkId, postResult)}
+                    post={postResultToPost(
+                      selectedNetworkId,
+                      postResultWithBot
+                    )}
                     isPostConsultation
                     onPressReply={onPressReply}
                   />
