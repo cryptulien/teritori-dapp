@@ -170,14 +170,12 @@ func (h *Handler) createPost(
 		return errors.Wrap(err, "failed to get block time")
 	}
 	message, ok := metadataJSON["message"].(string)
-	if !ok {
-		return errors.Wrap(err, "failed to get message")
-	}
-	//check question
-	if strings.Contains(message, "?") {
-		err1 := h.createAIAnswer(e, metadataJSON, createPostMsg) //store AI's answer to indexer db
-		if err1 != nil {
-			return errors.Wrap(err, "failed to generate answer using AI")
+	if ok {
+		if strings.HasPrefix(strings.TrimSpace(message), "/question") {
+			err1 := h.createAIAnswer(e, metadataJSON, createPostMsg) //store AI's answer to indexer db
+			if err1 != nil {
+				h.logger.Debug("failed to generate answer using AI")
+			}
 		}
 	}
 
@@ -225,6 +223,7 @@ func (h *Handler) createAIAnswer(e *Message, metadata map[string]interface{}, cr
 	url := "https://api.openai.com/v1/completions"
 	response := make([]byte, 0)
 	question, _ := metadata["message"].(string)
+	question = strings.Replace(strings.TrimSpace(question), "/question", "", 1)
 	input := CreateCompletionsRequest{
 		Model:       "text-davinci-003",
 		Prompt:      question,
