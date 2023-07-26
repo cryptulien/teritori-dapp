@@ -1,7 +1,6 @@
 import { Currency } from "@keplr-wallet/types";
 import React, {
   Dispatch,
-  FC,
   RefObject,
   SetStateAction,
   useEffect,
@@ -226,22 +225,14 @@ export const TextInputCustom = <T extends FieldValues>({
       />
     );
 
-  const Container: FC = ({ children }) =>
-    disabled ? (
-      <View>{children}</View>
-    ) : (
-      <CustomPressable
-        style={containerStyle}
-        onHoverIn={() => setHovered(true)}
-        onHoverOut={() => setHovered(false)}
-        onPress={() => inputRef?.current?.focus()}
-      >
-        {children}
-      </CustomPressable>
-    );
-
   return (
-    <Container>
+    <CustomPressable
+      style={containerStyle}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      onPress={() => inputRef?.current?.focus()}
+      disabled={disabled}
+    >
       {variant === "labelOutside" && !hideLabel && (
         <>
           <View style={styles.rowEnd}>
@@ -310,7 +301,7 @@ export const TextInputCustom = <T extends FieldValues>({
         </View>
       </TertiaryBox>
       <ErrorText>{error || fieldError}</ErrorText>
-    </Container>
+    </CustomPressable>
   );
 };
 

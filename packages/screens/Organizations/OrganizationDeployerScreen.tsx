@@ -4,10 +4,11 @@ import { StyleSheet, View } from "react-native";
 import { ConfigureVotingSection } from "./components/ConfigureVotingSection";
 import { CreateDAOSection } from "./components/CreateDAOSection";
 import { LaunchingOrganizationSection } from "./components/LaunchingOrganizationSection";
-import { MemberSettingsSection } from "./components/MemberSettingsSection";
+import { MemberBasedSettingsSection } from "./components/MemberBasedSettingsSection";
+import { NFTBasedSettingsSection } from "./components/NFTBasedSettingsSection";
 import { ReviewInformationSection } from "./components/ReviewInformationSection";
 import { RightSection } from "./components/RightSection";
-import { TokenSettingsSection } from "./components/TokenSettingsSection";
+import { TokenBasedSettingsSection } from "./components/TokenBasedSettingsSection";
 import {
   ConfigureVotingFormType,
   CreateDaoFormType,
@@ -15,6 +16,7 @@ import {
   TokenSettingFormType,
   MemberSettingFormType,
   DaoType,
+  NFTSettingFormType,
 } from "./types";
 import { BrandText } from "../../components/BrandText";
 import { ScreenContainer } from "../../components/ScreenContainer";
@@ -30,7 +32,7 @@ import { createDaoTokenBased, createDaoMemberBased } from "../../utils/dao";
 export const ORGANIZATION_DEPLOYER_STEPS = [
   "Create a DAO",
   "Configure voting",
-  "Set tokens or members",
+  "Set tokens, contracts or members",
   "Review information",
   "Launch organization",
 ];
@@ -56,6 +58,8 @@ export const OrganizationDeployerScreen = () => {
     useState<ConfigureVotingFormType>();
   const [step3TokenSettingFormData, setStep3TokenSettingFormData] =
     useState<TokenSettingFormType>();
+  const [step3NFTSettingFormData, setStep3NFTSettingFormData] =
+    useState<NFTSettingFormType>();
   const [step3MemberSettingFormData, setStep3MemberSettingFormData] =
     useState<MemberSettingFormType>();
   const [launchingStep, setLaunchingStep] = useState(0);
@@ -93,8 +97,47 @@ export const OrganizationDeployerScreen = () => {
       const walletAddress = selectedWallet.address;
       const signingClient = await getKeplrSigningCosmWasmClient(networkId);
 
+      console.log(
+        "daoFactoryContractAddressdaoFactoryContractAddressdaoFactoryContractAddress",
+        daoFactoryContractAddress
+      );
+
       let createDaoRes = null;
-      if (step1DaoInfoFormData.structure === DaoType.TOKEN_BASED) {
+      if (step1DaoInfoFormData.structure === DaoType.NFT_BASED) {
+        if (!step3NFTSettingFormData) return false;
+        // createDaoRes = await createDaoNftBased(
+        //   {
+        //     client: signingClient,
+        //     sender: walletAddress,
+        //     contractAddress: daoFactoryContractAddress,
+        //     daoPreProposeSingleCodeId: network.daoPreProposeSingleCodeId!,
+        //     daoProposalSingleCodeId: network.daoProposalSingleCodeId!,
+        //     daoCw20CodeId: network.daoCw20CodeId!,
+        //     daoCw20StakeCodeId: network.daoCw20StakeCodeId!,
+        //     daoVotingCw20StakedCodeId: network.daoVotingCw20StakedCodeId!,
+        //     daoCoreCodeId: network.daoCoreCodeId!,
+        //     name: step1DaoInfoFormData.organizationName,
+        //     description: step1DaoInfoFormData.organizationDescription,
+        //     tns: step1DaoInfoFormData.associatedTeritoriNameService,
+        //     imageUrl: step1DaoInfoFormData.imageUrl,
+        //     considerListedNFT: step3NFTSettingFormData.considerListedNFT,
+        //     contracts: step3NFTSettingFormData.contracts.map((item) => {
+        //       return { address: item.address };
+        //     }),
+        //     quorum: getPercent(step2ConfigureVotingFormData.supportPercent),
+        //     threshold: getPercent(
+        //       step2ConfigureVotingFormData.minimumApprovalPercent
+        //     ),
+        //     maxVotingPeriod: getDuration(
+        //       step2ConfigureVotingFormData.days,
+        //       step2ConfigureVotingFormData.hours,
+        //       step2ConfigureVotingFormData.minutes
+        //     ),
+        //   },
+        //   "auto"
+        // );
+        console.log("createDaoRescreateDaoRescreateDaoRes", createDaoRes);
+      } else if (step1DaoInfoFormData.structure === DaoType.TOKEN_BASED) {
         if (!step3TokenSettingFormData) return false;
         createDaoRes = await createDaoTokenBased(
           {
@@ -128,6 +171,7 @@ export const OrganizationDeployerScreen = () => {
           },
           "auto"
         );
+        console.log("createDaoRescreateDaoRescreateDaoRes", createDaoRes);
       } else if (step1DaoInfoFormData.structure === DaoType.MEMBER_BASED) {
         if (!step3MemberSettingFormData) return false;
         const { daoAddress, executeResult } = await createDaoMemberBased(
@@ -166,8 +210,8 @@ export const OrganizationDeployerScreen = () => {
       } else {
         return false;
       }
-      console.log("res", createDaoRes);
-      console.log(createDaoRes.transactionHash);
+
+      // console.log("TX hash: ", createDaoRes.transactionHash);
       if (createDaoRes) {
         return true;
       } else {
@@ -178,7 +222,7 @@ export const OrganizationDeployerScreen = () => {
         return false;
       }
     } catch (err: any) {
-      console.log(err.message);
+      console.error(err.message);
       setToastError({
         title: "Failed to create DAO",
         message: err.message,
@@ -199,6 +243,11 @@ export const OrganizationDeployerScreen = () => {
 
   const onSubmitTokenSettings = (data: TokenSettingFormType) => {
     setStep3TokenSettingFormData(data);
+    setCurrentStep(3);
+  };
+
+  const onSubmitContractSettings = (data: NFTSettingFormType) => {
+    setStep3NFTSettingFormData(data);
     setCurrentStep(3);
   };
 
@@ -239,12 +288,23 @@ export const OrganizationDeployerScreen = () => {
             style={
               currentStep === 2 &&
               step1DaoInfoFormData &&
+              step1DaoInfoFormData.structure === DaoType.NFT_BASED
+                ? styles.show
+                : styles.hidden
+            }
+          >
+            <NFTBasedSettingsSection onSubmit={onSubmitContractSettings} />
+          </View>
+          <View
+            style={
+              currentStep === 2 &&
+              step1DaoInfoFormData &&
               step1DaoInfoFormData.structure === DaoType.TOKEN_BASED
                 ? styles.show
                 : styles.hidden
             }
           >
-            <TokenSettingsSection onSubmit={onSubmitTokenSettings} />
+            <TokenBasedSettingsSection onSubmit={onSubmitTokenSettings} />
           </View>
           <View
             style={
@@ -255,7 +315,7 @@ export const OrganizationDeployerScreen = () => {
                 : styles.hidden
             }
           >
-            <MemberSettingsSection onSubmit={onSubmitMemberSettings} />
+            <MemberBasedSettingsSection onSubmit={onSubmitMemberSettings} />
           </View>
 
           <View style={currentStep === 3 ? styles.show : styles.hidden}>
